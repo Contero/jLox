@@ -3,3 +3,4 @@ implementation of the java based JLox interpreter from the book Crafting Interpr
 
 Added features:
   nested block comments
+  accepts decimal number literals wihtout leading 0
