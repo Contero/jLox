@@ -10,7 +10,7 @@ import java.util.Map;
 public class Scanner 
 {
 	private final String source;
-	private final List<Token> tokens = new ArrayList<Token>();
+	private final List<Token> tokens = new ArrayList<>();
 	private int start = 0,
 			current = 0,
 			line = 1;
@@ -101,7 +101,7 @@ public class Scanner
 				addToken(STAR);
 				break;
 			case '!':
-				addToken(match('!') ? BANG_EQUAL : BANG);
+				addToken(match('=') ? BANG_EQUAL : BANG);
 				break;
 			case '=':
 				addToken(match('=') ? EQUAL_EQUAL : EQUAL);

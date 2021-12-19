@@ -12,6 +12,7 @@ expressions.append("Binary : Expr left, Token operator, Expr right")
 expressions.append("Grouping : Expr expression")
 expressions.append("Literal : Object value")
 expressions.append("Unary : Token operator, Expr right")
+expressions.append("Ternary : Expr condition, Expr ifTrue, Expr ifFalse")
 
 def defineType(file, baseName, className, fieldList):
     file.write("\tstatic class " + className + " extends " + baseName + "\n\t{\n")

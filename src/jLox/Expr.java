@@ -10,6 +10,7 @@ abstract class Expr
 		R visitGroupingExpr(Grouping expr);
 		R visitLiteralExpr(Literal expr);
 		R visitUnaryExpr(Unary expr);
+		R visitTernaryExpr(Ternary expr);
 	}
 
 	static class Binary extends Expr
@@ -23,6 +24,7 @@ abstract class Expr
 		{
 			return visitor.visitBinaryExpr(this);
 		}
+
 		Binary(Expr left, Token operator, Expr right)
 		{
 			this.left=left;
@@ -40,6 +42,7 @@ abstract class Expr
 		{
 			return visitor.visitGroupingExpr(this);
 		}
+
 		Grouping(Expr expression)
 		{
 			this.expression=expression;
@@ -55,6 +58,7 @@ abstract class Expr
 		{
 			return visitor.visitLiteralExpr(this);
 		}
+
 		Literal(Object value)
 		{
 			this.value=value;
@@ -71,10 +75,31 @@ abstract class Expr
 		{
 			return visitor.visitUnaryExpr(this);
 		}
+
 		Unary(Token operator, Expr right)
 		{
 			this.operator=operator;
 			this.right=right;
+		}
+	}
+
+	static class Ternary extends Expr
+	{
+		final Expr condition;
+		final Expr ifTrue;
+		final Expr ifFalse;
+
+		@Override
+		<R> R accept(Visitor<R> visitor)
+		{
+			return visitor.visitTernaryExpr(this);
+		}
+
+		Ternary(Expr condition, Expr ifTrue, Expr ifFalse)
+		{
+			this.condition=condition;
+			this.ifTrue=ifTrue;
+			this.ifFalse=ifFalse;
 		}
 	}
 
