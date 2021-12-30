@@ -29,7 +29,23 @@ public class Parser
 
     private Expr expression()
     {
-        return equality();
+        return ternary();
+    }
+
+    private Expr ternary()
+    {
+        Expr expr = equality();
+
+        if (match(QUESTION))
+        {
+            Expr conditional = expr;
+            Expr ifTrue = expression();
+            consume(COLON, "Expecting : ");
+            Expr ifFalse = expression();
+            expr = new Expr.Ternary(conditional, ifTrue, ifFalse);
+        }
+
+        return expr;
     }
 
     private Expr equality()
