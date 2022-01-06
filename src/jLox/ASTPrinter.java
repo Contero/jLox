@@ -1,7 +1,7 @@
 package jLox;
 
-public class ASTPrinter implements Expr.Visitor<String>
-{
+public class ASTPrinter //implements Expr.Visitor<String>
+{}/*
     String print(Expr expr)
     {
         return expr.accept(this);
@@ -61,7 +61,7 @@ public class ASTPrinter implements Expr.Visitor<String>
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
         return expr.name.toString();
-    }*/
+    }
 
     private String parenthesize(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
@@ -75,4 +75,4 @@ public class ASTPrinter implements Expr.Visitor<String>
         return builder.toString();
     }
 
-}
+}*/

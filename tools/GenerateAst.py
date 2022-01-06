@@ -8,11 +8,20 @@ if folder == "":
     folder = os.getcwd() + "\\"
 
 expressions = []
+expressions.append("Assign : Token name, Expr value")
 expressions.append("Binary : Expr left, Token operator, Expr right")
 expressions.append("Grouping : Expr expression")
 expressions.append("Literal : Object value")
 expressions.append("Unary : Token operator, Expr right")
 expressions.append("Ternary : Expr condition, Expr ifTrue, Expr ifFalse")
+expressions.append("Variable: Token name")
+
+statements = []
+statements.append("Block : List<Stmt> statements")
+statements.append("Expression : Expr expression")
+statements.append("Print : Expr expression")
+statements.append("Var : Token name, Expr initializer")
+statements.append("Exit : Object value")
 
 def defineType(file, baseName, className, fieldList):
     file.write("\tstatic class " + className + " extends " + baseName + "\n\t{\n")
@@ -31,6 +40,7 @@ def defineType(file, baseName, className, fieldList):
     #constructor
     file.write("\t\t"+ className + "(" + fieldList + ")\n")
     file.write("\t\t{\n")
+
     for field in fields:
         name = field.split(" ")[1]
         file.write("\t\t\tthis." + name + "=" + name + ";\n")
@@ -68,3 +78,4 @@ def defineAst(outputDir, baseName, types):
     print("Finished!")
     
 defineAst(folder, "Expr", expressions)
+defineAst(folder, "Stmt", statements)
