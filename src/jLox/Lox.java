@@ -38,8 +38,10 @@ public class Lox
 		byte[] bytes = Files.readAllBytes(Paths.get(path));
 		run(new String(bytes, Charset.defaultCharset()), false);
 		
-		if (hadError) System.exit(65);
-		if (hadRuntimeError) System.exit(70);
+		if (hadError)
+			System.exit(65);
+		if (hadRuntimeError)
+			System.exit(70);
 	}
 	
 	public static void runPrompt() throws IOException
