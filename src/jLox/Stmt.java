@@ -8,7 +8,9 @@ abstract class Stmt
 	{
 		R visitBlockStmt(Block stmt);
 		R visitExpressionStmt(Expression stmt);
+		R visitIfStmt(If stmt);
 		R visitPrintStmt(Print stmt);
+		R visitWhileStmt(While stmt);
 		R visitVarStmt(Var stmt);
 		R visitExitStmt(Exit stmt);
 	}
@@ -45,6 +47,26 @@ abstract class Stmt
 		}
 	}
 
+	static class If extends Stmt
+	{
+		final Expr condition;
+		final Stmt thenBranch;
+		final Stmt elseBranch;
+
+		@Override
+		<R> R accept(Visitor<R> visitor)
+		{
+			return visitor.visitIfStmt(this);
+		}
+
+		If(Expr condition, Stmt thenBranch, Stmt elseBranch)
+		{
+			this.condition=condition;
+			this.thenBranch=thenBranch;
+			this.elseBranch=elseBranch;
+		}
+	}
+
 	static class Print extends Stmt
 	{
 		final Expr expression;
@@ -58,6 +80,24 @@ abstract class Stmt
 		Print(Expr expression)
 		{
 			this.expression=expression;
+		}
+	}
+
+	static class While extends Stmt
+	{
+		final Expr condition;
+		final Stmt body;
+
+		@Override
+		<R> R accept(Visitor<R> visitor)
+		{
+			return visitor.visitWhileStmt(this);
+		}
+
+		While(Expr condition, Stmt body)
+		{
+			this.condition=condition;
+			this.body=body;
 		}
 	}
 

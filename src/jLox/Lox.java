@@ -24,7 +24,15 @@ public class Lox
 		}
 		else if (args.length == 1)
 		{
-			runFile(args[0]);
+			try
+            {
+                runFile(args[0]);
+            }
+			catch (Exception e)
+            {
+                System.out.println("Problem loading file.");
+                System.exit(69);
+            }
 		}
 		else
 		{
