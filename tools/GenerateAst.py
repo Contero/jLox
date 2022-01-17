@@ -10,6 +10,7 @@ if folder == "":
 expressions = []
 expressions.append("Assign : Token name, Expr value")
 expressions.append("Binary : Expr left, Token operator, Expr right")
+expressions.append("Call : Expr callee, Token paren, List<Expr> arguments")
 expressions.append("Grouping : Expr expression")
 expressions.append("Literal : Object value")
 expressions.append("Logical : Expr left, Token operator, Expr right")
@@ -20,8 +21,10 @@ expressions.append("Variable: Token name")
 statements = []
 statements.append("Block : List<Stmt> statements")
 statements.append("Expression : Expr expression")
+statements.append("Function : Token name, List<Token> params, List<Stmt> body")
 statements.append("If : Expr condition, Stmt thenBranch, Stmt elseBranch")
 statements.append("Print : Expr expression")
+statements.append("Return : Token keyword, Expr value")
 statements.append("While : Expr condition, Stmt body")
 statements.append("Var : Token name, Expr initializer")
 statements.append("Exit : Object value")

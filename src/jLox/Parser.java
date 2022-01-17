@@ -12,11 +12,19 @@ public class Parser
     private final List<Token> tokens;
     private int current = 0;
 
+    /**
+     * Initializes instance of parser and list of tokens to parse
+     * @param tokens List of tokens to parse
+     */
     Parser(List<Token> tokens)
     {
         this.tokens = tokens;
     }
 
+    /**
+     * Parses tokens into list of statements, beginning with call to declaration
+     * @return List of statements parsed into AST
+     */
     List<Stmt> parse()
     {
         List<Stmt> statements = new ArrayList<>();
@@ -34,10 +42,19 @@ public class Parser
         return assignment();
     }
 
+    /**
+     * Attempts to create declaration statement from next tokens.
+     * If not a declartion, calls statement to attempt to parse next statement type
+     * @return statement parsed from tokens
+     */
     private Stmt declaration()
     {
         try
         {
+            if (match (FUN))
+            {
+                return function(CallableType.FUNCTION);
+            }
             if (match(VAR))
             {
                 return varDeclaration();
@@ -51,6 +68,7 @@ public class Parser
             return null;
         }
     }
+
     private Stmt statement()
     {
         if (match(FOR))
@@ -59,6 +77,8 @@ public class Parser
             return ifStatement();
         if (match(PRINT))
             return printStatement();
+        if (match(RETURN))
+            return returnStatement();
         if (match(WHILE))
             return whileStatement();
         if (match(EXIT))
@@ -147,6 +167,18 @@ public class Parser
         return new Stmt.Print(value);
     }
 
+    private Stmt returnStatement()
+    {
+        Token keyword = previous();
+        Expr value = null;
+        if (!check(SEMICOLON))
+        {
+            value = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
+    }
+
     private Stmt exitStatement()
     {
         if (match(SEMICOLON))
@@ -185,6 +217,31 @@ public class Parser
         Expr expr = expression();
         consume(SEMICOLON, "Expect ';' after expression");
         return new Stmt.Expression(expr);
+    }
+
+    private Stmt.Function function(CallableType kind)
+    {
+        Token name = consume(IDENTIFIER, "Expect " + kind.toString().toLowerCase() + " name.");
+        consume(LEFT_PAREN, "Expect '(' after " + kind.toString().toLowerCase() + " name.");
+        List<Token> parameters = new ArrayList<>();
+
+        if (!check(RIGHT_PAREN))
+        {
+            do
+            {
+                if (parameters.size() >= 255)
+                {
+                    error(peek(), "can't have more than 255 parameters.");
+                }
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+            }
+            while (match(COMMA));
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters.");
+        consume(LEFT_BRACE, "Expect '{' before " + kind.toString().toLowerCase() + " body.");
+        List<Stmt> body = block();
+
+        return new Stmt.Function(name, parameters, body);
     }
 
     private List<Stmt> block()
@@ -329,7 +386,47 @@ public class Parser
             return new Expr.Unary(operator, right);
         }
 
-        return primary();
+        return call();
+    }
+
+    private Expr finishCall(Expr callee)
+    {
+        List<Expr> arguments = new ArrayList<>();
+        if(!check(RIGHT_PAREN))
+        {
+            do
+            {
+                if (arguments.size() >= 255)
+                {
+                    error (peek(), "Can't have more than 255 arguments.");
+                }
+               arguments.add(expression());
+            }
+            while (match(COMMA));
+        }
+
+        Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
+
+        return new Expr.Call(callee, paren, arguments);
+    }
+
+    private Expr call()
+    {
+        Expr expr = primary();
+
+        while (true)
+        {
+            if (match(LEFT_PAREN))
+            {
+                expr = finishCall(expr);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return expr;
     }
 
     private Expr primary()
