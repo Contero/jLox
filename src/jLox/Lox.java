@@ -67,7 +67,12 @@ public class Lox
 			hadError = false;
 		}
 	}
-	
+
+	/**
+	 * Runs Lox code
+	 * @param source The source code
+	 * @param isRepl Indicates if code is run un REPL mode
+	 */
 	public static void run(String source, Boolean isRepl)
 	{
 		Scanner scanner = new Scanner(source);
@@ -75,6 +80,14 @@ public class Lox
 		
 		Parser parser = new Parser(tokens);
 		List<Stmt> statements = parser.parse();
+
+		if (hadError)
+		{
+			return;
+		}
+
+		Resolver resolver = new Resolver(interpreter);
+		resolver.resolve(statements);
 
 		if (hadError)
 		{

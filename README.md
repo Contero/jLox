@@ -9,3 +9,4 @@ Added features/changes:
  - Added exit statement
  - Added support to echo expression results in REPL mode
  - Added runtime error for using uninitialized variables
+ - Resolver error for unused variables
