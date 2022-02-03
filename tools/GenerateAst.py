@@ -2,7 +2,7 @@ import os
 
 # Generate AST java class for jlox
 print ("Default output is ..\\src\\jLox\\")
-folder = input ("Enter folder to override or Enter to use default>")
+folder = input ("Enter folder to override or press [Enter] to use default>")
 if folder == "":
     os.chdir("..\\src\\jLox")
     folder = os.getcwd() + "\\"
@@ -11,15 +11,19 @@ expressions = []
 expressions.append("Assign : Token name, Expr value")
 expressions.append("Binary : Expr left, Token operator, Expr right")
 expressions.append("Call : Expr callee, Token paren, List<Expr> arguments")
+expressions.append("Get : Expr object, Token name")
 expressions.append("Grouping : Expr expression")
 expressions.append("Literal : Object value")
 expressions.append("Logical : Expr left, Token operator, Expr right")
+expressions.append("Set : Expr object, Token name, Expr value")
+expressions.append("This : Token keyword")
 expressions.append("Unary : Token operator, Expr right")
 expressions.append("Ternary : Expr condition, Expr ifTrue, Expr ifFalse")
 expressions.append("Variable: Token name")
 
 statements = []
 statements.append("Block : List<Stmt> statements")
+statements.append("Class : Token name, List<Stmt.Function> methods")
 statements.append("Expression : Expr expression")
 statements.append("Function : Token name, List<Token> params, List<Stmt> body")
 statements.append("If : Expr condition, Stmt thenBranch, Stmt elseBranch")

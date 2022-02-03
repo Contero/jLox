@@ -37,6 +37,11 @@ public class Parser
         return statements;
     }
 
+    /**
+     * Begins the chain of expressions parsing attempts
+     * by calling the assignment expression
+     * @return the next expression object that can be parsed
+     */
     private Expr expression()
     {
         return assignment();
@@ -44,13 +49,17 @@ public class Parser
 
     /**
      * Attempts to create declaration statement from next tokens.
-     * If not a declartion, calls statement to attempt to parse next statement type
+     * If not a declaration, calls statement to attempt to parse next statement type
      * @return statement parsed from tokens
      */
     private Stmt declaration()
     {
         try
         {
+            if (match(CLASS))
+            {
+                return classDeclaration();
+            }
             if (match (FUN))
             {
                 return function(CallableType.FUNCTION);
@@ -69,6 +78,32 @@ public class Parser
         }
     }
 
+    /**
+     * generates a class tree
+     * @return class statement
+     */
+    private Stmt classDeclaration()
+    {
+        Token name = consume(IDENTIFIER, "Expect class name");
+        consume(LEFT_BRACE, "Expect { before class body");
+
+        List<Stmt.Function> methods = new ArrayList<>();
+
+        while (!check(RIGHT_BRACE) && !isAtEnd())
+        {
+            methods.add(function(CallableType.METHOD));
+        }
+
+        consume(RIGHT_BRACE, "Expect } after class body");
+
+        return new Stmt.Class(name, methods);
+    }
+
+    /**
+     * Attempts to create a statement by looking at tokens and matching to keywords
+     * If no match, kicks tokens to Expression logic
+     * @return the statement tree;
+     */
     private Stmt statement()
     {
         if (match(FOR))
@@ -219,6 +254,12 @@ public class Parser
         return new Stmt.Expression(expr);
     }
 
+    /**
+     * Creates function object from next tokens, does not include fun keyword
+     * starts are parameter list, creates block object to hold body statements
+     * @param kind The type of callable
+     * @return the function statement
+     */
     private Stmt.Function function(CallableType kind)
     {
         Token name = consume(IDENTIFIER, "Expect " + kind.toString().toLowerCase() + " name.");
@@ -257,6 +298,13 @@ public class Parser
         return statements;
     }
 
+    /**
+     * Attempts to parse an assignment (variable or field) out of next tokens
+     * gets lower order expression and looks for = Token indicating an assignment
+     * If the lower expression is a Variable name, creates Assign expression
+     * If it is a property getter, creates Set (object is instance, name and value)
+     * @return the parsed expression node
+     */
     private Expr assignment()
     {
         Expr expr = or();
@@ -270,6 +318,11 @@ public class Parser
             {
                 Token name = ((Expr.Variable)expr).name;
                 return new Expr.Assign(name, value);
+            }
+            else if (expr instanceof Expr.Get)
+            {
+                Expr.Get get = (Expr.Get)expr;
+                return new Expr.Set(get.object, get.name, value);
             }
 
             error(equals, "Invalid assignment target.");
@@ -389,9 +442,16 @@ public class Parser
         return call();
     }
 
+    /**
+     * Finishes a call,
+     * @param callee
+     * @return
+     */
     private Expr finishCall(Expr callee)
     {
         List<Expr> arguments = new ArrayList<>();
+
+        // checks for empty parameter list
         if(!check(RIGHT_PAREN))
         {
             do
@@ -410,6 +470,14 @@ public class Parser
         return new Expr.Call(callee, paren, arguments);
     }
 
+    /**
+     * attempts to parse call (function or method)
+     * primary will find a literal value, identifier, or grouping
+     * If the next token is ( or ., if finishes the call parse
+     * for a function (finishCall()) or property (create GET expression)
+     * Otherwise, not a call and kicks it back up the chain
+     * @return the parsed node
+     */
     private Expr call()
     {
         Expr expr = primary();
@@ -420,6 +488,11 @@ public class Parser
             {
                 expr = finishCall(expr);
             }
+            else if (match(DOT))
+            {
+                Token name = consume(IDENTIFIER, "Expect property name after '.'");
+                expr = new Expr.Get(expr, name);
+            }
             else
             {
                 break;
@@ -429,6 +502,11 @@ public class Parser
         return expr;
     }
 
+    /**
+     * Parses a primary token by matching reserved values, literals, identifiers, or (
+     * a ( will trigger another parse beginning back expression() after the (
+     * @return the parsed expression
+     */
     private Expr primary()
     {
         if (match(FALSE)) return new Expr.Literal(false);
@@ -436,7 +514,7 @@ public class Parser
         if (match(NIL)) return new Expr.Literal(null);
 
         if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal);
-
+        if (match(THIS)) return new Expr.This(previous());
         if (match(IDENTIFIER))
             return new Expr.Variable(previous());
 
@@ -450,6 +528,12 @@ public class Parser
         throw error(peek(), "Expect expression");
     }
 
+    /**
+     * Checks to see if the next token is of one of the provided types
+     * If it is a match, the token is consumed
+     * @param types The types to check
+     * @return An indicator of whether the token is of the provided types
+     */
     private boolean match(TokenType... types)
     {
         for (TokenType type : types)
@@ -464,6 +548,13 @@ public class Parser
         return false;
     }
 
+    /**
+     * Consumes the next token, checks to make sure it is the correct type
+     * throws error if not
+     * @param type The expected type of the next token
+     * @param message The error message if the token type is not the expected type
+     * @return the consumed token
+     */
     private Token consume(TokenType type, String message)
     {
         if (check(type))
@@ -474,6 +565,11 @@ public class Parser
         throw error(peek(), message);
     }
 
+    /**
+     * Checks the type of the next token, but does not advance or consume it
+     * @param type The expected type of the next token
+     * @return Indicator of whether the next token matches the expected type
+     */
     private boolean check(TokenType type)
     {
         if (isAtEnd())
@@ -484,6 +580,10 @@ public class Parser
         return peek().type == type;
     }
 
+    /**
+     * Moves to the next token pointer
+     * @return The token advanced over
+     */
     private Token advance()
     {
         if (!isAtEnd())
@@ -493,16 +593,28 @@ public class Parser
         return previous();
     }
 
+    /**
+     * Checks to see if the next token is the end of the file
+     * @return Indicator of if the pointer is at the end of the file
+     */
     private boolean isAtEnd()
     {
         return peek().type == EOF;
     }
 
+    /**
+     * Provides the next Token, does not advance the pointer
+     * @return the Next Token
+     */
     private Token peek()
     {
         return tokens.get(current);
     }
 
+    /**
+     * Returns the token behind the next token pointer
+     * @return The last token
+     */
     private Token previous()
     {
         return tokens.get(current - 1);

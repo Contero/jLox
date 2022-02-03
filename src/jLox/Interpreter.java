@@ -62,6 +62,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>
         return object.toString();
     }
 
+    /**
+     * Bottom of the chain, a literal value
+     * @param expr The expression to Interpret, which is just returning the value
+     * @return the value of the expression
+     */
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
@@ -87,6 +92,32 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>
             }
         }
         return evaluate(expr.right);
+    }
+
+    /** Interprets a set expression
+     *
+     * @param expr
+     * @return
+     */
+    @Override
+    public Object visitSetExpr(Expr.Set expr)
+    {
+        Object object = evaluate(expr.object);
+
+        if(!(object instanceof LoxInstance))
+        {
+            throw new RuntimeError(expr.name, "Only instances have fields.");
+        }
+
+        Object value = evaluate(expr.value);
+        ((LoxInstance)object).set(expr.name, value);
+        return value;
+    }
+
+    @Override
+    public Object visitThisExpr(Expr.This expr)
+    {
+        return lookUpVariable(expr.keyword, expr);
     }
 
     @Override
@@ -198,6 +229,25 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>
         return function.call(this, arguments);
     }
 
+    /**
+     * Getter for instance.  Object is first evaluated in case it is a chain of methods and
+     * properties and not a single identifier
+     * @param expr The expression ending with the property
+     * @return the object held by the property
+     */
+    @Override
+    public Object visitGetExpr(Expr.Get expr)
+    {
+        Object object = evaluate(expr.object);
+
+        if (object instanceof LoxInstance)
+        {
+            return ((LoxInstance) object).get(expr.name);
+        }
+
+        throw new RuntimeError(expr.name, "Only instances have properties");
+    }
+
     @Override
     public Object visitTernaryExpr(Expr.Ternary expr)
     {
@@ -252,6 +302,30 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>
         return null;
     }
 
+    /**
+     * Interprets Class statement, adds name to current environment
+     * Creates the class object and assigns it to the name
+     * @param stmt The class statement tree
+     * @return null
+     */
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt)
+    {
+        environment.define(stmt.name.lexeme, null);
+
+        Map<String, LoxFunction> methods = new HashMap<>();
+
+        for (Stmt.Function method : stmt.methods)
+        {
+            LoxFunction function = new LoxFunction(method, environment, method.name.lexeme.equals("init"));
+            methods.put(method.name.lexeme, function);
+        }
+
+        LoxClass klass = new LoxClass(stmt.name.lexeme, methods);
+        environment.assign(stmt.name, klass);
+        return null;
+    }
+
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt)
     {
@@ -266,7 +340,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt)
     {
-        LoxFunction function = new LoxFunction(stmt, environment);
+        LoxFunction function = new LoxFunction(stmt, environment, false);
         environment.define(stmt.name.lexeme, function);
         return null;
     }
