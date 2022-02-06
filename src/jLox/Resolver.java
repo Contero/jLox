@@ -47,7 +47,8 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>
     private enum ClassType
     {
         NONE,
-        CLASS
+        CLASS,
+        SUBCLASS
     }
 
     private ClassType currentClass = ClassType.NONE;
@@ -70,6 +71,23 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>
         declare(stmt.name);
         define(stmt.name);
 
+        if (stmt.superclass != null && stmt.name.lexeme.equals(stmt.superclass.name.lexeme))
+        {
+            Lox.error(stmt.superclass.name, "A class can;t inherit from itself, dum dum.");
+        }
+
+        if (stmt.superclass != null)
+        {
+             currentClass = ClassType.SUBCLASS;
+            resolve(stmt.superclass);
+        }
+
+        if (stmt.superclass != null)
+        {
+            beginScope();
+            scopes.peek().put("super", new Flags(true, true));
+        }
+
         beginScope();
         scopes.peek().put("this", new Flags(true, true));
 
@@ -84,6 +102,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>
         }
 
         endScope();
+
+        if (stmt.superclass != null)
+        {
+            endScope();
+        }
 
         currentClass = enclosingClass;
         return null;
@@ -112,7 +135,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>
     @Override
     public Void visitVariableExpr(Expr.Variable expr)
     {
-        if (!scopes.isEmpty() && scopes.peek().get(expr.name.lexeme).assigned == Boolean.FALSE)
+        if (!scopes.isEmpty() && scopes.peek().containsKey(expr.name.lexeme) && scopes.peek().get(expr.name.lexeme).assigned == Boolean.FALSE)
         {
             Lox.error(expr.name, "Can't read local variable in its own initializer.");
         }
@@ -238,6 +261,18 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>
     {
         resolve(expr.value);
         resolve(expr.object);
+        return null;
+    }
+
+    @Override
+    public Void visitSuperExpr(Expr.Super expr)
+    {
+        if (currentClass != ClassType.SUBCLASS)
+        {
+            Lox.error(expr.keyword, "super only works in subclasses, clown.");
+        }
+
+        resolveLocal(expr, expr.keyword);
         return null;
     }
 
